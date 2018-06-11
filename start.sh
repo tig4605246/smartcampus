@@ -8,7 +8,7 @@ case "$1" in
     echo -n "Starting smartcampus agent: \n"
           cd /home/ntust/
 
-          ./smartcampus -meter &
+          ./smartcampus -meter -gwserial=03 &
 
 
  	;;

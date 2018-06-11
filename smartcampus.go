@@ -1,4 +1,4 @@
-//Last edited time: 20180608
+//Last edited time: 20180611
 //Author: Kevin Xu Xi Ping
 //Description: Agent for meter and chiller
 package main
@@ -30,10 +30,10 @@ const (
 	MAC_FILE    = "./macFile"
 )
 
-var (
-	cpmLastTotal float64 = 0.0
-	aemLastTotal float64 = 0.0
-)
+// var (
+// 	cpmLastTotal map[string]float64
+// 	aemLastTotal map[string]float64
+// )
 
 type DataForm struct {
 	Timestamp     string  `json:"Timestamp"`
@@ -159,6 +159,7 @@ func MapSerial(macFile *bool) map[string]string {
 		sList["09b52f48"] = "01"
 		sList["09b52f10"] = "01"
 		sList["09b53b30"] = "01"
+		sList["09b4decb"] = "01"
 		sList["09b53b30"] = "98" //test
 		//99 for unknown
 	} else {
@@ -192,19 +193,6 @@ func GetGwStat(cpuPath string, diskPath string) ([]float64, int) {
 		log.Fatal("dStat read fail")
 		return []float64{0, 0}, -1
 	}
-	// fmt.Println("cpu:")
-	// for _, s := range cStat.CPUStats {
-	// 	fmt.Println(s)
-	// 	// s.User
-	// 	// s.Nice
-	// 	// s.System
-	// 	// s.Idle
-	// 	// s.IOWait
-	// }
-	fmt.Println("disk:", dStat.All, " ", dStat.Used, " ", dStat.Free)
-	// for _, s := range dStat {
-	// 	fmt.Println(s)
-	// }
 	return []float64{float64((cStat.CPUStats[0].Nice + cStat.CPUStats[0].System)) / float64((cStat.CPUStats[0].Nice + cStat.CPUStats[0].System + cStat.CPUStats[0].Idle)), (float64(dStat.Used*100) / float64(dStat.All))}, 0
 }
 
@@ -284,12 +272,12 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 			// fmt.Println("time: ", timeString)
 			// fmt.Println("Unix: ", timeUnix)
 			totalGen, _ := strconv.ParseFloat(subString[28], 64)
-			if cpmLastTotal == 0 {
-				cpmLastTotal = totalGen
-				totalGen = 0
-			} else {
-				totalGen = totalGen - cpmLastTotal
-			}
+			// if val, ok := cpmLastTotal[meterMac]; ok {
+			// 	totalGen = totalGen - val
+			// } else {
+			// 	cpmLastTotal[meterMac] = totalGen
+			// 	totalGen = 0
+			// }
 
 			//Form JSON
 			new := DataForm{
@@ -316,10 +304,6 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 			logFile.WriteString("Post return:\n" + string(body) + "\n" + res.Status)
 
 		}
-
-		// for _, n := range subString {
-		// 	fmt.Println(n, " ")
-		// }
 	}
 	return "Success", 0
 }
@@ -381,12 +365,12 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 			// fmt.Println("time: ", timeString)
 			// fmt.Println("Unix: ", timeUnix)
 			totalGen, _ := strconv.ParseFloat(subString[36], 64)
-			if aemLastTotal == 0 {
-				aemLastTotal = totalGen
-				totalGen = 0
-			} else {
-				totalGen = totalGen - aemLastTotal
-			}
+			// if aemLastTotal == 0 {
+			// 	aemLastTotal = totalGen
+			// 	totalGen = 0
+			// } else {
+			// 	totalGen = totalGen - aemLastTotal
+			// }
 			//Form JSON
 			new := DataForm{
 				Timestamp:     timeString,
@@ -413,9 +397,6 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 
 		}
 
-		// for _, n := range subString {
-		// 	fmt.Println(n, " ")
-		// }
 	}
 	return "Success", 0
 }

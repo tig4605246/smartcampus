@@ -166,6 +166,8 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 			res, err := http.Post(cpmUrl, "application/json", bytes.NewBuffer(jsonVal))
 			if err != nil {
 				logFile.WriteString("Post failed")
+				logFile.WriteString(err.Error() + "\n")
+				return "fail", -1
 			}
 			defer res.Body.Close()
 			body, _ := ioutil.ReadAll(res.Body)
@@ -179,6 +181,7 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
 	cmd := exec.Command("/home/aaeon/API/aemdra-agent-tx", "--get-dev-status")
 	var out bytes.Buffer
+	var deviceList map[string]bool
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
@@ -201,6 +204,11 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 		// fmt.Println("Len of subString is", len(subString))
 		if len(subString) >= 31 {
 			// fmt.Println("get first ", subString[0], "\n split it ")
+			if name, ok := deviceList[subString[0]]; ok {
+				continue
+			} else {
+				deviceList[subString[0]] = bool
+			}
 
 			//Format MAC and GWID
 
@@ -257,7 +265,9 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 			logFile.WriteString(cpmUrl)
 			res, err := http.Post(cpmUrl, "application/json", bytes.NewBuffer(jsonVal))
 			if err != nil {
-				logFile.WriteString("Post failed")
+				logFile.WriteString("\nPost failed\n")
+				logFile.WriteString(err.Error() + "\n")
+				return "fail", -1
 			}
 			defer res.Body.Close()
 			body, _ := ioutil.ReadAll(res.Body)

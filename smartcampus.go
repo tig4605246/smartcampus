@@ -12,6 +12,7 @@ import (
 	"strings"
 	//"math/rand"
 	linuxproc "github.com/c9s/goprocinfo/linux"
+	scchiller "smartcampus/chiller"
 	scmeter "smartcampus/meter"
 	"strconv"
 	"time"
@@ -106,7 +107,8 @@ func main() {
 		}
 
 	} else if *chiller {
-		TryChillerData()
+		scchiller.TryChillerData()
+		return
 	}
 	fmt.Println("Usage:\nsmartermeter [-help] [-config] [-meter] [-cpmUrl=] [-aemUrl=] [-cpuPath] [-diskPath]")
 	return

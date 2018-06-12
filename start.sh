@@ -8,7 +8,7 @@ case "$1" in
     echo -n "Starting smartcampus agent: \n"
           cd /home/ntust/
 
-          ./smartcampus -meter -gwserial=03 &
+          ./smartcampus -me:7080/gateway/v1/rawdata -aemurl=http://beta2-api.dforcepro.com:7080/gateway/v1/rawdata &
 
 
  	;;

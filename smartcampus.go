@@ -4,18 +4,15 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 	//"math/rand"
 	linuxproc "github.com/c9s/goprocinfo/linux"
-	"net/http"
+	scmeter "smartcampus/meter"
 	"strconv"
 	"time"
 )
@@ -34,17 +31,6 @@ const (
 // 	cpmLastTotal map[string]float64
 // 	aemLastTotal map[string]float64
 // )
-
-type DataForm struct {
-	Timestamp     string  `json:"Timestamp"`
-	TimestampUnix int64   `json:"Timestamp_Unix"`
-	MacAddress    string  `json:"MAC_Address"`
-	GwId          string  `json:"GW_ID"`
-	CpuRate       float64 `json:"CPU_rate"`
-	StorageRate   float64 `json:"Storage_rate"`
-	Get11         float64 `json:"GET_1_1"`
-	//Get12         float64 `json:"GET_1_2"`
-}
 
 func main() {
 	var cpmUrl string
@@ -65,6 +51,7 @@ func main() {
 	meter := flag.Bool("meter", false, "a bool")
 	test := flag.Bool("test", false, "a bool")
 	macFile := flag.Bool("macfile", false, "a bool")
+	chiller := flag.Bool("chiller", false, "a bool")
 
 	flag.Parse()
 
@@ -73,20 +60,22 @@ func main() {
 	if err != nil {
 		fmt.Println("Failed to write pid to /tmp/smartcampus")
 	}
+
 	//defer f.Close()
 
 	if *help {
+		fmt.Println("smartcampus Ver.", SC_VERSION)
+		fmt.Println("For specifying gateway serial number, use -gwserial")
 		fmt.Println("For specifying url, use -cpmUrl, -aemUrlm, -chillerUrl\n")
+		fmt.Println("For using mac mapping file, toggle -macfile")
 		fmt.Println("More info, please contact Kevin Xu, Email: tig4605246@gmail.com\n")
 		os.Exit(0)
-	}
-	if *test {
+	} else if *test {
 		sList := MapSerial(macFile)
 		stats, _ := GetGwStat(cpuPath, diskPath)
 		FunctionTest(gwSerial, cpmUrl, aemUrl, chillerUrl, sList, stats)
 		os.Exit(0)
-	}
-	if *meter {
+	} else if *meter {
 		cpmLog, err := os.Create("./cpmLog")
 		//_, err = cpmLog.WriteString("1234")
 		if err != nil {
@@ -108,14 +97,16 @@ func main() {
 			sList := MapSerial(macFile)
 			stats, _ := GetGwStat(cpuPath, diskPath)
 			// fmt.Println("stat: ", stats)
-			go GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog)
+			go scmeter.GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog)
 			//fmt.Println("cpm70 result:", msg, " ", ret)
-			go GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog)
+			go scmeter.GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog)
 			//fmt.Println("aemdra result:", msg, " ", ret)
 			time.Sleep(30 * time.Second)
 			CheckFile(cpmLog, aemLog)
 		}
 
+	} else if *chiller {
+		TryChillerData()
 	}
 	fmt.Println("Usage:\nsmartermeter [-help] [-config] [-meter] [-cpmUrl=] [-aemUrl=] [-cpuPath] [-diskPath]")
 	return
@@ -214,189 +205,4 @@ func CheckFile(cpmLog *os.File, aemLog *os.File) {
 	}
 	//fmt.Println("File size is ", stat.Size())
 	return
-}
-
-func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
-	cmd := exec.Command("/home/aaeon/API/cpm70-agent-tx", "--get-dev-status")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-		return "cpm70-agent-tx Not found", -1
-	}
-	//fmt.Printf("Result:\n %s", )
-	result := strings.Split(out.String(), "\n")
-	line := 0
-	if len(result) <= 2 {
-		logFile.WriteString("agent's return value is not valid, raw message:\n" + out.String())
-		return "not valid", 0
-	}
-	for _, m := range result {
-		var postMac string
-		var gwId string
-		// fmt.Println("Line ", line, ":\n", m)
-		line++
-		subString := strings.Split(m, ";")
-		// fmt.Println("Len of subString is", len(subString))
-		if len(subString) >= 31 {
-			// fmt.Println("get first ", subString[0], "\n split it ")
-
-			//Format MAC and GWID
-
-			meterSerialNum := subString[0][14:16]
-			meterMac := subString[0][6:14]
-			if val, ok := sList[meterMac]; ok {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialNum
-			} else {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialNum
-			}
-
-			// fmt.Println("meter serial: ", meterSerialNum)
-			// fmt.Println("meter Mac: ", meterMac)
-			// fmt.Println("Post Mac: ", postMac)
-			// fmt.Println("GW ID: ", gwId)
-
-			//Format time
-
-			subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
-			catchTime, _ := time.Parse("2006-01-02 15:04:05", subString[1])
-			timeString := catchTime.Format("2006-01-02 15:04:05")
-			timeUnix := catchTime.Unix()
-			// fmt.Println("time: ", timeString)
-			// fmt.Println("Unix: ", timeUnix)
-			totalGen, _ := strconv.ParseFloat(subString[28], 64)
-			// if val, ok := cpmLastTotal[meterMac]; ok {
-			// 	totalGen = totalGen - val
-			// } else {
-			// 	cpmLastTotal[meterMac] = totalGen
-			// 	totalGen = 0
-			// }
-
-			//Form JSON
-			new := DataForm{
-				Timestamp:     timeString,
-				TimestampUnix: timeUnix,
-				MacAddress:    postMac,
-				GwId:          gwId,
-				CpuRate:       stats[0],
-				StorageRate:   stats[1],
-				Get11:         totalGen,
-				//Get12:	       r2,
-			}
-			jsonVal, err := json.Marshal(new)
-			var prettyJSON bytes.Buffer
-			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			logFile.WriteString("json:\n" + string(prettyJSON.Bytes()))
-			logFile.WriteString(cpmUrl)
-			res, err := http.Post(cpmUrl, "application/json", bytes.NewBuffer(jsonVal))
-			if err != nil {
-				logFile.WriteString("Post failed")
-			}
-			defer res.Body.Close()
-			body, _ := ioutil.ReadAll(res.Body)
-			logFile.WriteString("Post return:\n" + string(body) + "\n" + res.Status)
-
-		}
-	}
-	return "Success", 0
-}
-
-func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
-	cmd := exec.Command("/home/aaeon/API/aemdra-agent-tx", "--get-dev-status")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-		return "aemdra-agent-tx Not found", -1
-	}
-	//fmt.Printf("Result:\n %s", )
-	result := strings.Split(out.String(), "\n")
-	line := 0
-	if len(result) <= 2 {
-		logFile.WriteString("agent's return value is not valid, raw message:\n" + out.String())
-		return "not valid", 0
-	}
-	for _, m := range result {
-		var postMac string
-		var gwId string
-		// fmt.Println("Line ", line, ":\n", m)
-		line++
-		subString := strings.Split(m, ";")
-		// fmt.Println("Len of subString is", len(subString))
-		if len(subString) >= 31 {
-			// fmt.Println("get first ", subString[0], "\n split it ")
-
-			//Format MAC and GWID
-
-			meterSerialNum := subString[0][14:16]
-			meterMac := subString[0][6:14]
-			if val, ok := sList[meterMac]; ok {
-				//do something here
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialNum
-			} else {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialNum
-			}
-
-			// fmt.Println("meter serial: ", meterSerialNum)
-			// fmt.Println("meter Mac: ", meterMac)
-			// fmt.Println("Post Mac: ", postMac)
-			// fmt.Println("GW ID: ", gwId)
-
-			//Format time
-
-			subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
-			catchTime, _ := time.Parse("2006-01-02 15:04:05", subString[1])
-			timeString := catchTime.Format("2006-01-02 15:04:05")
-			timeUnix := catchTime.Unix()
-			// fmt.Println("time: ", timeString)
-			// fmt.Println("Unix: ", timeUnix)
-			totalGen, _ := strconv.ParseFloat(subString[36], 64)
-			// if aemLastTotal == 0 {
-			// 	aemLastTotal = totalGen
-			// 	totalGen = 0
-			// } else {
-			// 	totalGen = totalGen - aemLastTotal
-			// }
-			//Form JSON
-			new := DataForm{
-				Timestamp:     timeString,
-				TimestampUnix: timeUnix,
-				MacAddress:    postMac,
-				GwId:          gwId,
-				CpuRate:       stats[0],
-				StorageRate:   stats[1],
-				Get11:         totalGen,
-				//Get12:	       r2,
-			}
-			jsonVal, err := json.Marshal(new)
-			var prettyJSON bytes.Buffer
-			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			logFile.WriteString("json:\n" + string(prettyJSON.Bytes()))
-			logFile.WriteString(cpmUrl)
-			res, err := http.Post(cpmUrl, "application/json", bytes.NewBuffer(jsonVal))
-			if err != nil {
-				logFile.WriteString("Post failed")
-			}
-			defer res.Body.Close()
-			body, _ := ioutil.ReadAll(res.Body)
-			logFile.WriteString("Post return:\n" + string(body) + "\n" + res.Status)
-
-		}
-
-	}
-	return "Success", 0
 }

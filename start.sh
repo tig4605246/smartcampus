@@ -8,7 +8,7 @@ case "$1" in
     echo -n "Starting smartcampus agent: \n"
           cd /home/bmw/smarcampus/
 
-          ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02 &
+          ./smartcampus -meter -macfile gwserial=03 &
 
 
  	;;

@@ -3,24 +3,35 @@
 
 case "$1" in
 
-  start)
+    startmeter)
 
-    echo -n "Starting smartcampus agent: \n"
-          cd /home/bmw/smarcampus/
+        echo -n "Starting smartcampus meter agent: \n"
+                cd /home/ntust/smartcampus/
 
-          ./smartcampus -meter -macfile gwserial=03 &
+                ./smartcampus -meter -macfile gwserial=${2} &
 
 
- 	;;
+        ;;
 
-  stop)
+    startchiller)
 
-    echo -n "Stoping smartcampus agent: \n"
-          smartcampus_PID=`cat /tmp/smartcampus_PID`
-          kill -9 ${smartcampus_PID}
-         
+        echo -n "Starting smartcampus chiller agent: \n"
+                cd /home/bmw/smartcampus/
 
- 	;;
+                ./smartcampus -chiller -pastmac=${3} gwid=${2} &
+
+
+        ;;
+        
+
+    stop)
+
+        echo -n "Stoping smartcampus agent: \n"
+                smartcampus_PID=`cat /tmp/smartcampus_PID`
+                kill -9 ${smartcampus_PID}
+                
+
+        ;;
 
 esac
 

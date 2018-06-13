@@ -13,14 +13,14 @@ import (
 )
 
 type Airbox struct {
-	Timestamp     string  `json:"Timestamp"`
-	TimestampUnix int64   `json:"Timestamp_Unix"`
-	MacAddress    string  `json:"MAC_Address"`
-	GwId          string  `json:"GW_ID"`
-	CpuRate       float64 `json:"CPU_rate"`
-	StorageRate   int     `json:"Storage_rate"`
-	Get11         float64 `json:"GET_1_1"`
-	Get12         float64 `json:"GET_1_2"`
+	//Timestamp     string  `json:"Timestamp"`
+	//TimestampUnix int64   `json:"Timestamp_Unix"`
+	MacAddress  string  `json:"MAC_Address"`
+	GwId        string  `json:"GW_ID"`
+	CpuRate     float64 `json:"CPU_rate"`
+	StorageRate int     `json:"Storage_rate"`
+	Get11       float64 `json:"GET_1_1"`
+	Get12       float64 `json:"GET_1_2"`
 	//Get21         float64 `json:"GET_2_1"`
 	//Get22         float64 `json:"GET_2_2"`
 	//Get23         float64 `json:"GET_2_3"`
@@ -35,18 +35,15 @@ func AirBox() {
 		}
 		time.Sleep(10 * time.Second)
 	}
-	//fmt.Scanln()
-	fmt.Println("done")
 }
 
 func AirPost(gwid int) {
-	//aList := []Airbox{}
 	mac := []string{"aa:bb:cc:11:11:18", "aa:bb:cc:11:11:17", "aa:bb:cc:11:11:14", "aa:bb:cc:11:11:12"}
 	id := []string{"airbox_18", "airbox_17", "airbox_14", "airbox_12"}
 
-	nowTime := time.Now()
-	timeString := nowTime.Format("2006-01-02 15:04:05")
-	timeUnix := nowTime.Unix()
+	//nowTime := time.Now()
+	//timeString := nowTime.Format("2006-01-02 15:04:05")
+	//timeUnix := nowTime.Unix()
 	r1 := rand.Float64() * 50.0
 	r2 := rand.Float64() * 50.0
 	//r3 := rand.Float64() * 50.0
@@ -54,14 +51,14 @@ func AirPost(gwid int) {
 	//r5 := rand.Float64() * 50.0
 	//r6 := 0.0
 	new := Airbox{
-		Timestamp:     timeString,
-		TimestampUnix: timeUnix,
-		MacAddress:    mac[gwid],
-		GwId:          id[gwid],
-		CpuRate:       1.0,
-		StorageRate:   1,
-		Get11:         r1,
-		Get12:         r2,
+		//Timestamp:     timeString,
+		//TimestampUnix: timeUnix,
+		MacAddress:  mac[gwid],
+		GwId:        id[gwid],
+		CpuRate:     1.0,
+		StorageRate: 1,
+		Get11:       r1,
+		Get12:       r2,
 		//Get22:         r3,
 		//Get23:         r4,
 		//Set11:         r5,
@@ -72,7 +69,7 @@ func AirPost(gwid int) {
 	var prettyJSON bytes.Buffer
 	err = json.Indent(&prettyJSON, jsonVal, "", "\t")
 	fmt.Println("json:\n", string(prettyJSON.Bytes()))
-	res, err := http.Post("https://beta2-api.dforcepro.com/gateway/v1/rawdata", "application/json", bytes.NewBuffer(jsonVal))
+	res, err := http.Post("https://beta2-api.dforcepro.com/gateway/v2/rawdata", "application/json", bytes.NewBuffer(jsonVal))
 	if err != nil {
 		fmt.Println("Post failed")
 	}

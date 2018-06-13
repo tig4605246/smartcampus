@@ -12,6 +12,7 @@ import (
 	"strings"
 	//"math/rand"
 	linuxproc "github.com/c9s/goprocinfo/linux"
+	"smartcampus/airbox"
 	scchiller "smartcampus/chiller"
 	scmeter "smartcampus/meter"
 	"strconv"
@@ -57,6 +58,7 @@ func main() {
 	test := flag.Bool("test", false, "a bool")
 	macFile := flag.Bool("macfile", false, "a bool")
 	chiller := flag.Bool("chiller", false, "a bool")
+	version := flag.Bool("version", false, "a bool")
 
 	flag.Parse()
 
@@ -75,10 +77,15 @@ func main() {
 		fmt.Println("For using mac mapping file, toggle -macfile")
 		fmt.Println("For more info, please Refer to https://github.com/tig4605246/smartcampus")
 		os.Exit(0)
+	} else if *version {
+		Version()
+		return
 	} else if *test {
 		sList := MapSerial(macFile)
 		stats, _ := GetGwStat(cpuPath, diskPath)
 		FunctionTest(gwSerial, cpmUrl, aemUrl, chillerUrl, sList, stats)
+		fmt.Println("Now posting Airbox fake data")
+		airbox.AirBox()
 		os.Exit(0)
 	} else if *meter {
 		cpmLog, err := os.Create("./cpmLog")
@@ -137,8 +144,7 @@ func main() {
 		}
 
 	}
-	Version()
-	fmt.Println("Usage:\nsmartermeter [-help] [-meter] [-chiller] [-test] [-macfile] [-gwserial] [-cpmurl] [-aemurl] [-chillerurl] [-cpupath] [-diskpath]")
+	//fmt.Println("Usage:\nsmartermeter [-help] [-meter] [-chiller] [-test] [-macfile] [-gwserial] [-cpmurl] [-aemurl] [-chillerurl] [-cpupath] [-diskpath]")
 	return
 }
 

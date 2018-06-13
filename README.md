@@ -1,8 +1,8 @@
-## Gateway Daemon for Aemdra and CPM70 Meters (GDACM)
+# Gateway Daemon for Aemdra and CPM70 Meters (GDACM)
 
 A smart campus gw daemon. This program also contains the test function for airbox.
 
-# Build Version
+## Build Version
 
 go version go1.9.2 linux/amd64
 

@@ -49,7 +49,15 @@ type DataForm struct {
 	Get127        float64 `json:"GET_1_27"`
 	Get128        float64 `json:"GET_1_28"`
 	Get129        float64 `json:"GET_1_29"`
-	//Get12         float64 `json:"GET_1_2"`
+	Get130        float64 `json:"GET_1_30,omitempty"`
+	Get131        float64 `json:"GET_1_31,omitempty"`
+	Get132        float64 `json:"GET_1_32,omitempty"`
+	Get133        float64 `json:"GET_1_33,omitempty"`
+	Get134        float64 `json:"GET_1_34,omitempty"`
+	Get135        float64 `json:"GET_1_35,omitempty"`
+	Get136        float64 `json:"GET_1_36,omitempty"`
+	Get137        float64 `json:"GET_1_37,omitempty"`
+	Get138        float64 `json:"GET_1_38,omitempty"`
 }
 
 func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
@@ -79,22 +87,24 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 			// fmt.Println("get first ", subString[0], "\n split it ")
 
 			//Format MAC and GWID
-
-			meterSerialNum := subString[0][14:16]
+			meterSerialNum, err := strconv.ParseInt(subString[0][14:16], 16, 32)
+			if err != nil {
+				logFile.WriteString("parse " + subString[0][14:16] + " to int failed\n")
+			}
 			meterMac := subString[0][6:14]
 			if val, ok := sList[meterMac]; ok {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialNum
+				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + string(meterSerialNum)
+				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + string(meterSerialNum)
+				gwId = "meter_" + gwSerial + "_" + val + "_" + string(meterSerialNum)
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + string(meterSerialNum)
 			} else {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialNum
+				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + string(meterSerialNum)
+				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + string(meterSerialNum)
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + string(meterSerialNum)
+				gwId = "meter_" + gwSerial + "_" + "99" + "_" + string(meterSerialNum)
 			}
 
-			// fmt.Println("meter serial: ", meterSerialNum)
+			// fmt.Println("meter serial: ", string(meterSerialNum))
 			// fmt.Println("meter Mac: ", meterMac)
 			// fmt.Println("Post Mac: ", postMac)
 			// fmt.Println("GW ID: ", gwId)
@@ -211,19 +221,21 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 
 			//Format MAC and GWID
 
-			meterSerialNum := subString[0][14:16]
+			meterSerialNum, err := strconv.ParseInt(subString[0][14:16], 16, 32)
+			if err != nil {
+				logFile.WriteString("parse " + subString[0][14:16] + " to int failed\n")
+			}
 			meterMac := subString[0][6:14]
 			if val, ok := sList[meterMac]; ok {
-				//do something here
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialNum
+				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + string(meterSerialNum)
+				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + string(meterSerialNum)
+				gwId = "meter_" + gwSerial + "_" + val + "_" + string(meterSerialNum)
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + string(meterSerialNum)
 			} else {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + meterSerialNum
-				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + meterSerialNum
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialNum
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialNum
+				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + string(meterSerialNum)
+				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + string(meterSerialNum)
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + string(meterSerialNum)
+				gwId = "meter_" + gwSerial + "_" + "99" + "_" + string(meterSerialNum)
 			}
 
 			// fmt.Println("meter serial: ", meterSerialNum)
@@ -240,6 +252,10 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 			// fmt.Println("time: ", timeString)
 			// fmt.Println("Unix: ", timeUnix)
 			totalGen, _ := strconv.ParseFloat(subString[36], 64)
+			var value [45]float64
+			for i := 3; i < len(subString); i++ {
+				value[i], _ = strconv.ParseFloat(subString[i], 64)
+			}
 			// if aemLastTotal == 0 {
 			// 	aemLastTotal = totalGen
 			// 	totalGen = 0
@@ -255,7 +271,43 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 				CpuRate:       stats[0],
 				StorageRate:   stats[1],
 				Get11:         totalGen,
-				//Get12:	       r2,
+				Get12:         value[3],
+				Get13:         value[4],
+				Get14:         value[5],
+				Get15:         value[6],
+				Get16:         value[7],
+				Get17:         value[8],
+				Get18:         value[9],
+				Get19:         value[10],
+				Get110:        value[11],
+				Get111:        value[12],
+				Get112:        value[13],
+				Get113:        value[14],
+				Get114:        value[15],
+				Get115:        value[16],
+				Get116:        value[17],
+				Get117:        value[18],
+				Get118:        value[19],
+				Get119:        value[20],
+				Get120:        value[21],
+				Get121:        value[22],
+				Get122:        value[23],
+				Get123:        value[24],
+				Get124:        value[25],
+				Get125:        value[26],
+				Get126:        value[27],
+				Get127:        value[28],
+				Get128:        value[29],
+				Get129:        value[30],
+				Get130:        value[31],
+				Get131:        value[32],
+				Get132:        value[33],
+				Get133:        value[34],
+				Get134:        value[35],
+				Get135:        value[36],
+				Get136:        value[37],
+				Get137:        value[39],
+				Get138:        value[40],
 			}
 			jsonVal, err := json.Marshal(new)
 			var prettyJSON bytes.Buffer

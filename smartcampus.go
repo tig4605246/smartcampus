@@ -1,4 +1,4 @@
-//Last edited time: 20180611
+//Last edited time: 20180613
 //Author: Kevin Xu Xi Ping
 //Description: Agent for meter and chiller
 package main
@@ -59,6 +59,7 @@ func main() {
 	macFile := flag.Bool("macfile", false, "a bool")
 	chiller := flag.Bool("chiller", false, "a bool")
 	version := flag.Bool("version", false, "a bool")
+	airboxTest := flag.Bool("airbox", false, "a bool")
 
 	flag.Parse()
 
@@ -84,9 +85,10 @@ func main() {
 		sList := MapSerial(macFile)
 		stats, _ := GetGwStat(cpuPath, diskPath)
 		FunctionTest(gwSerial, cpmUrl, aemUrl, chillerUrl, sList, stats)
+		os.Exit(0)
+	} else if *airboxTest {
 		fmt.Println("Now posting Airbox fake data")
 		airbox.AirBox()
-		os.Exit(0)
 	} else if *meter {
 		cpmLog, err := os.Create("./cpmLog")
 		//_, err = cpmLog.WriteString("1234")
@@ -200,7 +202,10 @@ func MapSerial(macFile *bool) map[string]string {
 		for i := 0; i < len(subString); i++ {
 			if len(subString[i]) > 0 {
 				macMap := strings.Split(subString[i], ":")
-				sList[macMap[0]] = macMap[1]
+				if len(macMap) > 1 {
+					sList[macMap[0]] = macMap[1]
+				}
+
 			}
 			//fmt.Println(i, ":", subString[i])
 		}

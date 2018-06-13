@@ -156,13 +156,12 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 				Get127:        value[27],
 				Get128:        value[29],
 				Get129:        value[30],
-				//Get12:	       r2,
 			}
 			jsonVal, err := json.Marshal(new)
 			var prettyJSON bytes.Buffer
 			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			logFile.WriteString("json:\n" + string(prettyJSON.Bytes()))
-			logFile.WriteString(cpmUrl)
+			logFile.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
+			logFile.WriteString(cpmUrl + "\n")
 			res, err := http.Post(cpmUrl, "application/json", bytes.NewBuffer(jsonVal))
 			if err != nil {
 				logFile.WriteString("Post failed")
@@ -204,10 +203,10 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 		// fmt.Println("Len of subString is", len(subString))
 		if len(subString) >= 31 {
 			// fmt.Println("get first ", subString[0], "\n split it ")
-			if name, ok := deviceList[subString[0]]; ok {
+			if _, ok := deviceList[subString[0]]; ok {
 				continue
 			} else {
-				deviceList[subString[0]] = bool
+				deviceList[subString[0]] = true
 			}
 
 			//Format MAC and GWID
@@ -261,8 +260,8 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 			jsonVal, err := json.Marshal(new)
 			var prettyJSON bytes.Buffer
 			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			logFile.WriteString("json:\n" + string(prettyJSON.Bytes()))
-			logFile.WriteString(cpmUrl)
+			logFile.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
+			logFile.WriteString(cpmUrl + "\n")
 			res, err := http.Post(cpmUrl, "application/json", bytes.NewBuffer(jsonVal))
 			if err != nil {
 				logFile.WriteString("\nPost failed\n")

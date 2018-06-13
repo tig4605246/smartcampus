@@ -24,7 +24,7 @@ const (
 	CPM_URL     = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
 	AEM_URL     = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
 	CHILLER_URL = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
-	GWSERIAL    = "0003"
+	GWSERIAL    = "03"
 	MAC_FILE    = "./macFile"
 )
 
@@ -40,6 +40,8 @@ func main() {
 	var cpuPath string
 	var diskPath string
 	var gwSerial string
+	var gwId string
+	var postMac string
 
 	flag.StringVar(&cpmUrl, "cpmurl", CPM_URL, "a string var")
 	flag.StringVar(&aemUrl, "aemurl", AEM_URL, "a string var")
@@ -47,6 +49,8 @@ func main() {
 	flag.StringVar(&cpuPath, "cpupath", "/proc/stat", "a string var")
 	flag.StringVar(&diskPath, "diskpath", "/dev/mmcblk0p1", "a string var")
 	flag.StringVar(&gwSerial, "gwserial", GWSERIAL, "a string var")
+	flag.StringVar(&gwId, "gwid", "chiller_01", "a string var")
+	flag.StringVar(&postMac, "postmac", "aa:bb:03:01:01:01", "a string var")
 
 	help := flag.Bool("help", false, "a bool")
 	meter := flag.Bool("meter", false, "a bool")
@@ -69,7 +73,7 @@ func main() {
 		fmt.Println("For specifying gateway serial number, use -gwserial")
 		fmt.Println("For specifying url, use -cpmUrl, -aemUrlm, -chillerUrl\n")
 		fmt.Println("For using mac mapping file, toggle -macfile")
-		fmt.Println("More info, please contact Kevin Xu, Email: tig4605246@gmail.com\n")
+		fmt.Println("For more info, please Refer to https://github.com/tig4605246/smartcampus")
 		os.Exit(0)
 	} else if *test {
 		sList := MapSerial(macFile)
@@ -107,10 +111,34 @@ func main() {
 		}
 
 	} else if *chiller {
-		scchiller.TryChillerData()
-		return
+
+		chillerLog, err := os.Create("./chillerLog")
+		//_, err = chillerLog.WriteString("1234")
+		if err != nil {
+			// handle the error here
+			fmt.Println("Can't create chillerLog")
+			return
+		}
+		aemLog, err := os.Create("./aemLog")
+		//_, err = aemLog.WriteString("1234")
+		if err != nil {
+			// handle the error here
+			fmt.Println("Can't create aemLog")
+			return
+		}
+		CheckFile(chillerLog, aemLog)
+		defer chillerLog.Close()
+		defer aemLog.Close()
+		for {
+			stats, _ := GetGwStat(cpuPath, diskPath)
+			go scchiller.GetChillerData(gwId, postMac, chillerUrl, stats, chillerLog)
+			time.Sleep(30 * time.Second)
+			CheckFile(chillerLog, aemLog)
+		}
+
 	}
-	fmt.Println("Usage:\nsmartermeter [-help] [-config] [-meter] [-cpmUrl=] [-aemUrl=] [-cpuPath] [-diskPath]")
+	Version()
+	fmt.Println("Usage:\nsmartermeter [-help] [-meter] [-chiller] [-test] [-macfile] [-gwserial] [-cpmurl] [-aemurl] [-chillerurl] [-cpupath] [-diskpath]")
 	return
 }
 

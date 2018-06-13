@@ -6,9 +6,9 @@ case "$1" in
   start)
 
     echo -n "Starting smartcampus agent: \n"
-          cd /home/ntust/
+          cd /home/bmw/smarcampus/
 
-          ./smartcampus -me:7080/gateway/v1/rawdata -aemurl=http://beta2-api.dforcepro.com:7080/gateway/v1/rawdata &
+          ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02 &
 
 
  	;;

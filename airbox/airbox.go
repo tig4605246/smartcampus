@@ -72,6 +72,7 @@ func AirPost(gwid int) {
 	res, err := http.Post("https://beta2-api.dforcepro.com/gateway/v2/rawdata", "application/json", bytes.NewBuffer(jsonVal))
 	if err != nil {
 		fmt.Println("Post failed")
+		return
 	}
 	defer res.Body.Close()
 	body, _ := ioutil.ReadAll(res.Body)

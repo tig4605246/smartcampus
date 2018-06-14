@@ -3,6 +3,7 @@ package meter
 import (
 	"bytes"
 	"encoding/json"
+	//"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -87,43 +88,34 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 			// fmt.Println("get first ", subString[0], "\n split it ")
 
 			//Format MAC and GWID
-			meterSerialNum, err := strconv.ParseInt(subString[0][14:16], 16, 32)
+			tmpMeterSerial, err := strconv.ParseInt(subString[0][14:16], 16, 32)
 			if err != nil {
 				logFile.WriteString("parse " + subString[0][14:16] + " to int failed\n")
 			}
+			var meterSerialString string
+			if tmpMeterSerial < 10 {
+				meterSerialString = "0" + strconv.FormatInt(tmpMeterSerial, 10)
+			} else {
+				meterSerialString = strconv.FormatInt(tmpMeterSerial, 10)
+			}
+			//logFile.WriteString("serial string: " + meterSerialString + "\n")
 			meterMac := subString[0][6:14]
 			if val, ok := sList[meterMac]; ok {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + string(meterSerialNum)
-				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + string(meterSerialNum)
-				gwId = "meter_" + gwSerial + "_" + val + "_" + string(meterSerialNum)
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + string(meterSerialNum)
+				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialString
 			} else {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + string(meterSerialNum)
-				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + string(meterSerialNum)
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + string(meterSerialNum)
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + string(meterSerialNum)
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
+				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
 			}
 
-			// fmt.Println("meter serial: ", string(meterSerialNum))
-			// fmt.Println("meter Mac: ", meterMac)
-			// fmt.Println("Post Mac: ", postMac)
-			// fmt.Println("GW ID: ", gwId)
-
 			//Format time
-
-			subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
+			if len(subString[1]) > 17 {
+				subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
+			}
 			catchTime, _ := time.Parse("2006-01-02 15:04:05", subString[1])
 			timeString := catchTime.Format("2006-01-02 15:04:05")
 			timeUnix := catchTime.Unix()
-			// fmt.Println("time: ", timeString)
-			// fmt.Println("Unix: ", timeUnix)
 			totalGen, _ := strconv.ParseFloat(subString[28], 64)
-			// if val, ok := cpmLastTotal[meterMac]; ok {
-			// 	totalGen = totalGen - val
-			// } else {
-			// 	cpmLastTotal[meterMac] = totalGen
-			// 	totalGen = 0
-			// }
 			var value [32]float64
 			for i := 2; i < len(subString); i++ {
 				value[i], _ = strconv.ParseFloat(subString[i], 64)
@@ -190,7 +182,7 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
 	cmd := exec.Command("/home/aaeon/API/aemdra-agent-tx", "--get-dev-status")
 	var out bytes.Buffer
-	var deviceList map[string]bool
+	deviceList := make(map[string]bool)
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
@@ -221,47 +213,40 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 
 			//Format MAC and GWID
 
-			meterSerialNum, err := strconv.ParseInt(subString[0][14:16], 16, 32)
+			tmpMeterSerial, err := strconv.ParseInt(subString[0][14:16], 16, 32)
 			if err != nil {
 				logFile.WriteString("parse " + subString[0][14:16] + " to int failed\n")
+				continue
 			}
+			var meterSerialString string
+			if tmpMeterSerial < 10 {
+				meterSerialString = "0" + strconv.FormatInt(tmpMeterSerial, 10)
+			} else {
+				meterSerialString = strconv.FormatInt(tmpMeterSerial, 10)
+			}
+			//logFile.WriteString("serial string: " + meterSerialString + "\n")
 			meterMac := subString[0][6:14]
 			if val, ok := sList[meterMac]; ok {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + val + ":" + string(meterSerialNum)
-				//gwId = "meter_" + subString[0][4:6] + "_" + val + "_" + string(meterSerialNum)
-				gwId = "meter_" + gwSerial + "_" + val + "_" + string(meterSerialNum)
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + string(meterSerialNum)
+				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialString
 			} else {
-				//postMac = "aa:bb:02" + ":" + subString[0][4:6] + ":" + "99" + ":" + string(meterSerialNum)
-				//gwId = "meter_" + subString[0][4:6] + "_" + "99" + "_" + string(meterSerialNum)
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + string(meterSerialNum)
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + string(meterSerialNum)
+				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
+				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
 			}
-
-			// fmt.Println("meter serial: ", meterSerialNum)
-			// fmt.Println("meter Mac: ", meterMac)
-			// fmt.Println("Post Mac: ", postMac)
-			// fmt.Println("GW ID: ", gwId)
 
 			//Format time
 
-			subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
+			if len(subString[1]) > 17 {
+				subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
+			}
 			catchTime, _ := time.Parse("2006-01-02 15:04:05", subString[1])
 			timeString := catchTime.Format("2006-01-02 15:04:05")
 			timeUnix := catchTime.Unix()
-			// fmt.Println("time: ", timeString)
-			// fmt.Println("Unix: ", timeUnix)
 			totalGen, _ := strconv.ParseFloat(subString[36], 64)
 			var value [45]float64
 			for i := 3; i < len(subString); i++ {
 				value[i], _ = strconv.ParseFloat(subString[i], 64)
 			}
-			// if aemLastTotal == 0 {
-			// 	aemLastTotal = totalGen
-			// 	totalGen = 0
-			// } else {
-			// 	totalGen = totalGen - aemLastTotal
-			// }
 			//Form JSON
 			new := DataForm{
 				Timestamp:     timeString,

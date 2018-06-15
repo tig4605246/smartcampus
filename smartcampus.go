@@ -21,7 +21,7 @@ import (
 
 //Default values
 const (
-	SC_VERSION  = "0.1"
+	SC_VERSION  = "1.0"
 	CPM_URL     = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
 	AEM_URL     = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
 	CHILLER_URL = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"

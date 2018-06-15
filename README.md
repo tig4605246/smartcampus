@@ -1,4 +1,4 @@
-# Gateway Daemon for Aemdra and CPM70 Meters (GDACM)
+# Gateway Daemon for Aemdra and CPM70 Meters (DAM)
 
 A smart campus gw daemon. This program also contains the test function for airbox.
 
@@ -35,7 +35,7 @@ env GOOS=linux GOARCH=arm go build
     run in smart meter mode
 -chiller (bool)
     run in chiller mode
--test
+-airbox
     post to airbox for testing
 -version
     Check the version
@@ -44,6 +44,9 @@ env GOOS=linux GOARCH=arm go build
 ## Example Usage
 
 ````
+# Run post test
+$ ./smartcampus -airbox
+
 # Run in smart meter mode
 # Set gw serial to 05
 # Set disk file path to /dev/sda1
@@ -55,3 +58,8 @@ $ ./smartcampus -meter -gwserial=05 -diskpath=/dev/sda1
 # Set disk file path to /dev/sda1
 $ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02
 ````
+
+## Known Issues
+
+*  CPU check only process the first core
+*  Disk check always return 0

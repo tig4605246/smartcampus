@@ -59,8 +59,7 @@ $ ./smartcampus -meter -gwserial=05 -diskpath=/dev/sda1
 $ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02
 
 # Run smart meter inside wood house
-# Uncomment wood house codes and rebuild the code
-$ ./smartcampus -meter
+$ ./smartcampus -meter -woodhouse
 ````
 
 ## Known Issues

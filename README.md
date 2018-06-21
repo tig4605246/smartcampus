@@ -57,6 +57,10 @@ $ ./smartcampus -meter -gwserial=05 -diskpath=/dev/sda1
 # Set post mac to aa:bb:03:01:01:02
 # Set disk file path to /dev/sda1
 $ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02
+
+# Run smart meter inside wood house
+# Uncomment wood house codes and rebuild the code
+$ ./smartcampus -meter
 ````
 
 ## Known Issues

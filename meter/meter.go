@@ -108,6 +108,10 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
 			}
 
+			//Wood Space
+			// gwId = "space_02"
+			// postMac = "aa:bb:05:01:01:02"
+
 			//Format time
 			if len(subString[1]) > 17 {
 				subString[1] = subString[1][:10] + " " + subString[1][11:13] + ":" + subString[1][14:16] + ":" + subString[1][17:]
@@ -228,11 +232,15 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 			meterMac := subString[0][6:14]
 			if val, ok := sList[meterMac]; ok {
 				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialString
+				postMac = "aa:bb:03" + ":" + gwSerial + ":" + val + ":" + meterSerialString
 			} else {
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
+				postMac = "aa:bb:03" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
 				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
 			}
+
+			//Wood House
+			// gwId = "space_02"
+			// postMac = "aa:bb:05:01:01:02"
 
 			//Format time
 

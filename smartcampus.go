@@ -60,6 +60,7 @@ func main() {
 	chiller := flag.Bool("chiller", false, "a bool")
 	version := flag.Bool("version", false, "a bool")
 	airboxTest := flag.Bool("airbox", false, "a bool")
+	woodHouse := flag.Bool("woodhouse", false, "a bool")
 
 	flag.Parse()
 
@@ -111,9 +112,9 @@ func main() {
 			sList := MapSerial(macFile)
 			stats, _ := GetGwStat(cpuPath, diskPath)
 			// fmt.Println("stat: ", stats)
-			go scmeter.GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog)
+			go scmeter.GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog, woodHouse)
 			//fmt.Println("cpm70 result:", msg, " ", ret)
-			go scmeter.GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog)
+			go scmeter.GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog, woodHouse)
 			//fmt.Println("aemdra result:", msg, " ", ret)
 			time.Sleep(30 * time.Second)
 			CheckFile(cpmLog, aemLog)

@@ -61,7 +61,7 @@ type DataForm struct {
 	Get138        float64 `json:"GET_1_38,omitempty"`
 }
 
-func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
+func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File, woodHouse *bool) (string, int) {
 	cmd := exec.Command("/home/aaeon/API/cpm70-agent-tx", "--get-dev-status")
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -99,18 +99,20 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 				meterSerialString = strconv.FormatInt(tmpMeterSerial, 10)
 			}
 			//logFile.WriteString("serial string: " + meterSerialString + "\n")
-			meterMac := subString[0][6:14]
-			if val, ok := sList[meterMac]; ok {
-				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + val + ":" + meterSerialString
+			if *woodHouse {
+				//Wood House
+				gwId = "space_02"
+				postMac = "aa:bb:05:01:01:02"
 			} else {
-				postMac = "aa:bb:02" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
+				meterMac := subString[0][6:14]
+				if val, ok := sList[meterMac]; ok {
+					gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
+					postMac = "aa:bb:03" + ":" + gwSerial + ":" + val + ":" + meterSerialString
+				} else {
+					postMac = "aa:bb:03" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
+					gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
+				}
 			}
-
-			//Wood Space
-			// gwId = "space_02"
-			// postMac = "aa:bb:05:01:01:02"
 
 			//Format time
 			if len(subString[1]) > 17 {
@@ -183,7 +185,7 @@ func GetCpm70Data(gwSerial string, cpmUrl string, sList map[string]string, stats
 	return "Success", 0
 }
 
-func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File) (string, int) {
+func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stats []float64, logFile *os.File, woodHouse *bool) (string, int) {
 	cmd := exec.Command("/home/aaeon/API/aemdra-agent-tx", "--get-dev-status")
 	var out bytes.Buffer
 	deviceList := make(map[string]bool)
@@ -229,18 +231,21 @@ func GetAemdraData(gwSerial string, cpmUrl string, sList map[string]string, stat
 				meterSerialString = strconv.FormatInt(tmpMeterSerial, 10)
 			}
 			//logFile.WriteString("serial string: " + meterSerialString + "\n")
-			meterMac := subString[0][6:14]
-			if val, ok := sList[meterMac]; ok {
-				gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
-				postMac = "aa:bb:03" + ":" + gwSerial + ":" + val + ":" + meterSerialString
-			} else {
-				postMac = "aa:bb:03" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
-				gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
-			}
 
-			//Wood House
-			// gwId = "space_02"
-			// postMac = "aa:bb:05:01:01:02"
+			if *woodHouse {
+				//Wood House
+				gwId = "space_02"
+				postMac = "aa:bb:05:01:01:02"
+			} else {
+				meterMac := subString[0][6:14]
+				if val, ok := sList[meterMac]; ok {
+					gwId = "meter_" + gwSerial + "_" + val + "_" + meterSerialString
+					postMac = "aa:bb:03" + ":" + gwSerial + ":" + val + ":" + meterSerialString
+				} else {
+					postMac = "aa:bb:03" + ":" + gwSerial + ":" + "99" + ":" + meterSerialString
+					gwId = "meter_" + gwSerial + "_" + "99" + "_" + meterSerialString
+				}
+			}
 
 			//Format time
 

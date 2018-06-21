@@ -58,7 +58,7 @@ $ ./smartcampus -meter -gwserial=05 -diskpath=/dev/sda1
 # Set disk file path to /dev/sda1
 $ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02
 
-# Run smart meter inside wood house
+# Run smart meter inside wood house (Available after 1.2)
 $ ./smartcampus -meter -woodhouse
 ````
 

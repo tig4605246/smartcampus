@@ -27,6 +27,8 @@ const (
 	CHILLER_URL = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
 	GWSERIAL    = "03"
 	MAC_FILE    = "./macFile"
+	IM_CPM      = "http://140.118.101.190:4000/cpm72/gw/test"
+	IM_AEM      = "http://140.118.101.190:4000/aemdra/gw/test"
 )
 
 // var (
@@ -43,6 +45,8 @@ func main() {
 	var gwSerial string
 	var gwId string
 	var postMac string
+	var imAemUrl string
+	var imCpmUrl string
 
 	flag.StringVar(&cpmUrl, "cpmurl", CPM_URL, "a string var")
 	flag.StringVar(&aemUrl, "aemurl", AEM_URL, "a string var")
@@ -52,6 +56,8 @@ func main() {
 	flag.StringVar(&gwSerial, "gwserial", GWSERIAL, "a string var")
 	flag.StringVar(&gwId, "gwid", "chiller_01", "a string var")
 	flag.StringVar(&postMac, "postmac", "aa:bb:03:01:01:01", "a string var")
+	flag.StringVar(&imAemUrl, "imaemurl", IM_AEM, "a string var")
+	flag.StringVar(&imCpmUrl, "imcpmurl", IM_CPM, "a string var")
 
 	help := flag.Bool("help", false, "a bool")
 	meter := flag.Bool("meter", false, "a bool")
@@ -63,14 +69,14 @@ func main() {
 	woodHouse := flag.Bool("woodhouse", false, "a bool")
 
 	flag.Parse()
+	scmeter.ImTest(IM_CPM)
+	os.Exit(0)
 
 	d1 := []byte(strconv.Itoa(os.Getpid()))
 	err := ioutil.WriteFile("/tmp/smartcampus_PID", d1, 0644)
 	if err != nil {
 		fmt.Println("Failed to write pid to /tmp/smartcampus")
 	}
-
-	//defer f.Close()
 
 	if *help {
 		fmt.Println("smartcampus Ver.", SC_VERSION)
@@ -112,9 +118,9 @@ func main() {
 			sList := MapSerial(macFile)
 			stats, _ := GetGwStat(cpuPath, diskPath)
 			// fmt.Println("stat: ", stats)
-			go scmeter.GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog, woodHouse)
+			go scmeter.GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog, woodHouse, imCpmUrl)
 			//fmt.Println("cpm70 result:", msg, " ", ret)
-			go scmeter.GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog, woodHouse)
+			go scmeter.GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog, woodHouse, imAemUrl)
 			//fmt.Println("aemdra result:", msg, " ", ret)
 			time.Sleep(30 * time.Second)
 			CheckFile(cpmLog, aemLog)

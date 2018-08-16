@@ -1,77 +1,68 @@
-//Last edited time: 20180613
-//Author: Kevin Xu Xi Ping
+//Last edited time: 20180814
+//Author: NTUST, BMW Lab, Xu Xi Ping
 //Description: Agent for meter and chiller
 package main
 
 import (
 	"flag"
 	"fmt"
+	linuxproc "github.com/c9s/goprocinfo/linux"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
-	//"math/rand"
-	linuxproc "github.com/c9s/goprocinfo/linux"
 	"smartcampus/airbox"
 	scchiller "smartcampus/chiller"
 	scmeter "smartcampus/meter"
 	"strconv"
+	"strings"
 	"time"
 )
 
 //Default values
 const (
-	SC_VERSION  = "1.2"
-	CPM_URL     = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
-	AEM_URL     = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
-	CHILLER_URL = "https://beta2-api.dforcepro.com/gateway/v1/rawdata"
-	GWSERIAL    = "03"
-	MAC_FILE    = "./macFile"
-	IM_CPM      = "http://140.118.101.190:4000/cpm72/gw/test"
-	IM_AEM      = "http://140.118.101.190:4000/aemdra/gw/test"
+	SCVersion  = "1.6"
+	CpmURL     = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
+	AemURL     = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
+	ChillerURL = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
+	GWSerial   = "03"
+	MACFile    = "./macFile"
+	IMCpmURL   = "http://140.118.101.97:4000/cpm72/gw/data"
+	IMAemURL   = "http://140.118.101.97:4000/aemdra/gw/data"
 )
 
-// var (
-// 	cpmLastTotal map[string]float64
-// 	aemLastTotal map[string]float64
-// )
-
 func main() {
-	var cpmUrl string
-	var aemUrl string
-	var chillerUrl string
+	var cpmURL string
+	var aemURL string
+	var chillerURL string
 	var cpuPath string
 	var diskPath string
-	var gwSerial string
-	var gwId string
+	var GWSerial string
+	var gwID string
 	var postMac string
-	var imAemUrl string
-	var imCpmUrl string
+	var imAemURL string
+	var imCpmURL string
 
-	flag.StringVar(&cpmUrl, "cpmurl", CPM_URL, "a string var")
-	flag.StringVar(&aemUrl, "aemurl", AEM_URL, "a string var")
-	flag.StringVar(&chillerUrl, "chillerurl", CHILLER_URL, "a string var")
+	flag.StringVar(&cpmURL, "cpmurl", CpmURL, "a string var")
+	flag.StringVar(&aemURL, "aemurl", AemURL, "a string var")
+	flag.StringVar(&chillerURL, "chillerurl", ChillerURL, "a string var")
 	flag.StringVar(&cpuPath, "cpupath", "/proc/stat", "a string var")
 	flag.StringVar(&diskPath, "diskpath", "/dev/mmcblk0p1", "a string var")
-	flag.StringVar(&gwSerial, "gwserial", GWSERIAL, "a string var")
-	flag.StringVar(&gwId, "gwid", "chiller_01", "a string var")
+	flag.StringVar(&GWSerial, "gwserial", GWSerial, "a string var")
+	flag.StringVar(&gwID, "gwid", "chiller_01", "a string var")
 	flag.StringVar(&postMac, "postmac", "aa:bb:03:01:01:01", "a string var")
-	flag.StringVar(&imAemUrl, "imaemurl", IM_AEM, "a string var")
-	flag.StringVar(&imCpmUrl, "imcpmurl", IM_CPM, "a string var")
+	flag.StringVar(&imAemURL, "imaemurl", IMAemURL, "a string var")
+	flag.StringVar(&imCpmURL, "imcpmurl", IMCpmURL, "a string var")
 
 	help := flag.Bool("help", false, "a bool")
 	meter := flag.Bool("meter", false, "a bool")
 	test := flag.Bool("test", false, "a bool")
 	macFile := flag.Bool("macfile", false, "a bool")
 	chiller := flag.Bool("chiller", false, "a bool")
-	version := flag.Bool("version", false, "a bool")
+	versionFlag := flag.Bool("version", false, "a bool")
 	airboxTest := flag.Bool("airbox", false, "a bool")
 	woodHouse := flag.Bool("woodhouse", false, "a bool")
 
 	flag.Parse()
-	scmeter.ImTest(IM_CPM)
-	os.Exit(0)
-
 	d1 := []byte(strconv.Itoa(os.Getpid()))
 	err := ioutil.WriteFile("/tmp/smartcampus_PID", d1, 0644)
 	if err != nil {
@@ -79,91 +70,75 @@ func main() {
 	}
 
 	if *help {
-		fmt.Println("smartcampus Ver.", SC_VERSION)
-		fmt.Println("For specifying gateway serial number, use -gwserial")
-		fmt.Println("For specifying url, use -cpmUrl, -aemUrlm, -chillerUrl\n")
+		fmt.Println("smartcampus Ver.", SCVersion)
+		fmt.Println("For specifying gateway serial number, use -GWSerial")
+		fmt.Println("For specifying url, use -cpmURL, -aemUrlm, -chillerURL")
 		fmt.Println("For using mac mapping file, toggle -macfile")
 		fmt.Println("For more info, please Refer to https://github.com/tig4605246/smartcampus")
 		os.Exit(0)
-	} else if *version {
-		Version()
+	} else if *versionFlag {
+		version()
 		return
 	} else if *test {
-		sList := MapSerial(macFile)
-		stats, _ := GetGwStat(cpuPath, diskPath)
-		FunctionTest(gwSerial, cpmUrl, aemUrl, chillerUrl, sList, stats)
+		sList := mapSerial(macFile)
+		stats, _ := getGwStat(cpuPath, diskPath)
+		functionTest(GWSerial, cpmURL, aemURL, chillerURL, sList, stats)
 		os.Exit(0)
 	} else if *airboxTest {
 		fmt.Println("Now posting Airbox fake data")
 		airbox.AirBox()
 	} else if *meter {
-		cpmLog, err := os.Create("./cpmLog")
-		//_, err = cpmLog.WriteString("1234")
-		if err != nil {
-			// handle the error here
-			fmt.Println("Can't create cpmLog")
-			return
+		//Initialize the input struct
+		scConfig, res := initConf(GWSerial, cpmURL, aemURL, macFile, cpuPath, diskPath, woodHouse, imCpmURL, imAemURL)
+		if res != "success" {
+			fmt.Println("Error while creating config struct: ", res)
+			os.Exit(0)
 		}
-		aemLog, err := os.Create("./aemLog")
-		//_, err = aemLog.WriteString("1234")
-		if err != nil {
-			// handle the error here
-			fmt.Println("Can't create aemLog")
-			return
-		}
-		CheckFile(cpmLog, aemLog)
-		defer cpmLog.Close()
-		defer aemLog.Close()
+		checkFile(scConfig.CpmLog, scConfig.AemLog)
+		defer scConfig.CpmLog.Close()
+		defer scConfig.AemLog.Close()
+		//Parse URL of cpm and aem respectively
 		for {
-			sList := MapSerial(macFile)
-			stats, _ := GetGwStat(cpuPath, diskPath)
-			// fmt.Println("stat: ", stats)
-			go scmeter.GetCpm70Data(gwSerial, cpmUrl, sList, stats, cpmLog, woodHouse, imCpmUrl)
-			//fmt.Println("cpm70 result:", msg, " ", ret)
-			go scmeter.GetAemdraData(gwSerial, aemUrl, sList, stats, aemLog, woodHouse, imAemUrl)
-			//fmt.Println("aemdra result:", msg, " ", ret)
+			scConfig.Stats, _ = getGwStat(cpuPath, diskPath)
+			go scmeter.GetCpm70Data(scConfig)
+			go scmeter.GetAemdraData(scConfig)
 			time.Sleep(30 * time.Second)
-			CheckFile(cpmLog, aemLog)
+			checkFile(scConfig.CpmLog, scConfig.AemLog)
 		}
 
 	} else if *chiller {
 
 		chillerLog, err := os.Create("./chillerLog")
-		//_, err = chillerLog.WriteString("1234")
 		if err != nil {
-			// handle the error here
 			fmt.Println("Can't create chillerLog")
 			return
 		}
 		aemLog, err := os.Create("./aemLog")
-		//_, err = aemLog.WriteString("1234")
 		if err != nil {
-			// handle the error here
 			fmt.Println("Can't create aemLog")
 			return
 		}
-		CheckFile(chillerLog, aemLog)
+		checkFile(chillerLog, aemLog)
 		defer chillerLog.Close()
 		defer aemLog.Close()
 		for {
-			stats, _ := GetGwStat(cpuPath, diskPath)
-			go scchiller.GetChillerData(gwId, postMac, chillerUrl, stats, chillerLog)
+			stats, _ := getGwStat(cpuPath, diskPath)
+			go scchiller.GetChillerData(gwID, postMac, chillerURL, stats, chillerLog)
 			time.Sleep(30 * time.Second)
-			CheckFile(chillerLog, aemLog)
+			checkFile(chillerLog, aemLog)
 		}
 
 	}
-	//fmt.Println("Usage:\nsmartermeter [-help] [-meter] [-chiller] [-test] [-macfile] [-gwserial] [-cpmurl] [-aemurl] [-chillerurl] [-cpupath] [-diskpath]")
 	return
 }
 
-func FunctionTest(gwSerial string, cpmUrl string, aemUrl string, chillerUrl string, sList map[string]string, stats []float64) {
-	fmt.Println("Gateway Serial:", gwSerial)
+func functionTest(GWSerial string, cpmURL string, aemURL string, chillerURL string, sList map[string]string, stats []float64) {
+	fmt.Println("Gateway Serial:", GWSerial)
 	fmt.Println("Cpu:", stats[0], " Disk:", stats[1])
 	fmt.Println("url config:")
-	fmt.Println("cpm url :\n", cpmUrl)
-	fmt.Println("aem url :\n", aemUrl)
-	fmt.Println("chiller url is:\n", chillerUrl)
+	fmt.Println("cpm url :\n", cpmURL)
+	fmt.Println("aem url :\n", aemURL)
+	fmt.Println("chiller url is:\n", chillerURL)
 	fmt.Println("List meter's matching table")
 	for name, val := range sList {
 		fmt.Println(name, " ", val)
@@ -171,11 +146,11 @@ func FunctionTest(gwSerial string, cpmUrl string, aemUrl string, chillerUrl stri
 	return
 }
 
-func Version() {
-	fmt.Println("SmartCampus Agent Version: ", SC_VERSION)
+func version() {
+	fmt.Println("SmartCampus Agent Version: ", SCVersion)
 }
 
-func MapSerial(macFile *bool) map[string]string {
+func mapSerial(macFile *bool) map[string]string {
 	sList := make(map[string]string)
 	if !*macFile {
 		sList["09b52f35"] = "01"
@@ -199,10 +174,8 @@ func MapSerial(macFile *bool) map[string]string {
 		sList["09b53b30"] = "98" //test
 		//99 for unknown
 	} else {
-		file, err := ioutil.ReadFile(MAC_FILE)
-		//_, err = cpmLog.WriteString("1234")
+		file, err := ioutil.ReadFile(MACFile)
 		if err != nil {
-			// handle the error here
 			log.Fatal("Can't Open macFile")
 		}
 		subString := strings.Split(string(file), "\n")
@@ -214,14 +187,13 @@ func MapSerial(macFile *bool) map[string]string {
 				}
 
 			}
-			//fmt.Println(i, ":", subString[i])
 		}
 	}
 
 	return sList
 }
 
-func GetGwStat(cpuPath string, diskPath string) ([]float64, int) {
+func getGwStat(cpuPath string, diskPath string) ([]float64, int) {
 	cStat, err := linuxproc.ReadStat(cpuPath)
 	if err != nil {
 		log.Fatal("cStat read fail")
@@ -235,7 +207,7 @@ func GetGwStat(cpuPath string, diskPath string) ([]float64, int) {
 	return []float64{float64((cStat.CPUStats[0].Nice + cStat.CPUStats[0].System)) / float64((cStat.CPUStats[0].Nice + cStat.CPUStats[0].System + cStat.CPUStats[0].Idle)), (float64(dStat.Used*100) / float64(dStat.All))}, 0
 }
 
-func CheckFile(cpmLog *os.File, aemLog *os.File) {
+func checkFile(cpmLog *os.File, aemLog *os.File) {
 	// get the cpmLog size
 	stat, err := cpmLog.Stat()
 	if err != nil {
@@ -251,6 +223,30 @@ func CheckFile(cpmLog *os.File, aemLog *os.File) {
 	if stat.Size() > 1000000 {
 		aemLog.Truncate(0)
 	}
-	//fmt.Println("File size is ", stat.Size())
 	return
+}
+
+func initConf(GWSerial string, cpmURL string, aemURL string, macFile *bool, cpuPath string, diskPath string, woodHouse *bool, imCpmURL string, imAemURL string) (scmeter.FuncConf, string) {
+	var err error
+	scConfig := scmeter.FuncConf{}
+	scConfig.CpmURL = strings.Split(cpmURL, "^")
+	scConfig.AemURL = strings.Split(aemURL, "^")
+	scConfig.GwSerial = GWSerial
+	scConfig.SList = mapSerial(macFile)
+	scConfig.Stats, _ = getGwStat(cpuPath, diskPath)
+	scConfig.WoodHouse = woodHouse
+	scConfig.ImCpmURL = strings.Split(imCpmURL, "^")
+	scConfig.ImAemURL = strings.Split(imAemURL, "^")
+	scConfig.CpmLog = new(os.File)
+	scConfig.CpmLog, err = os.Create("./cpmLog")
+	if err != nil {
+		fmt.Println("Can't create cpmLog")
+		return scConfig, "fail to create log"
+	}
+	scConfig.AemLog, err = os.Create("./aemLog")
+	if err != nil {
+		fmt.Println("Can't create aemLog")
+		return scConfig, "fail to create log"
+	}
+	return scConfig, "success"
 }

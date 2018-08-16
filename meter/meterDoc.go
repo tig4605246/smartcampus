@@ -1,6 +1,25 @@
 package meter
 
-//Dedicated for RT's server
+import (
+	"os"
+)
+
+//FuncConf : Function inputs reorganize as a struct
+//Make it more flexible to meet "UNSTABLE" changes by "SOME PEOPLE"
+type FuncConf struct {
+	GwSerial  string
+	CpmURL    []string
+	AemURL    []string
+	SList     map[string]string
+	Stats     []float64
+	CpmLog    *os.File
+	AemLog    *os.File
+	WoodHouse *bool
+	ImCpmURL  []string
+	ImAemURL  []string
+}
+
+//DataForm : Dedicated for RT's server
 type DataForm struct {
 	Timestamp     string  `json:"Timestamp"`
 	TimestampUnix int64   `json:"Timestamp_Unix"`
@@ -48,7 +67,7 @@ type DataForm struct {
 	Get138        float64 `json:"GET_1_38,omitempty"`
 }
 
-//Dedicated for IM
+//CpmForm : Dedicated for IM
 type CpmForm struct {
 	Timestamp string  `json:"lastReportTime"`
 	GwId      string  `json:"GWID"`
@@ -84,7 +103,7 @@ type CpmForm struct {
 	Get129    float64 `json:"iavg_thd"`
 }
 
-//Dedicated for IM
+//AemForm : Dedicated for IM
 type AemForm struct {
 	Timestamp string  `json:"lastReportTime"`
 	GwId      string  `json:"GWID"`
@@ -129,15 +148,18 @@ type AemForm struct {
 	Get138    float64 `json:"rec"`
 	Get139    float64 `json:"re_tot"`
 }
+
+//ImWrap1 : A wrap to meet the server format
 type ImWrap1 struct {
 	CpmRow []CpmForm `json:"rows,omitempty"`
 }
 
+//ImWrap2 : A wrap to meet the server format
 type ImWrap2 struct {
 	AemRow []AemForm `json:"rows,omitempty"`
 }
 
-func InsertCpm(gwId string, stats []float64, timeUnix int64, postMac string, timeString string, value [32]float64, totalGen float64) DataForm {
+func insertCpm(gwId string, stats []float64, timeUnix int64, postMac string, timeString string, value [32]float64, totalGen float64) DataForm {
 	new := DataForm{
 		Timestamp:     timeString,
 		TimestampUnix: timeUnix,
@@ -178,7 +200,7 @@ func InsertCpm(gwId string, stats []float64, timeUnix int64, postMac string, tim
 	return new
 }
 
-func InsertCpmIm(gwSerial string, timeString string, value [32]float64, devId string) CpmForm {
+func insertCpmIm(gwSerial string, timeString string, value [32]float64, devId string) CpmForm {
 	cpmData := CpmForm{
 		Timestamp: timeString,
 		GwId:      gwSerial,
@@ -216,7 +238,7 @@ func InsertCpmIm(gwSerial string, timeString string, value [32]float64, devId st
 	return cpmData
 }
 
-func InsertAem(gwId string, stats []float64, timeUnix int64, postMac string, timeString string, value [45]float64, totalGen float64) DataForm {
+func insertAem(gwId string, stats []float64, timeUnix int64, postMac string, timeString string, value [45]float64, totalGen float64) DataForm {
 	new := DataForm{
 		Timestamp:     timeString,
 		TimestampUnix: timeUnix,
@@ -266,7 +288,7 @@ func InsertAem(gwId string, stats []float64, timeUnix int64, postMac string, tim
 	return new
 }
 
-func InsertAemIm(gwSerial string, timeString string, value [45]float64, devId string) AemForm {
+func insertAemIm(gwSerial string, timeString string, value [45]float64, devId string) AemForm {
 	aemData := AemForm{
 		Timestamp: timeString,
 		GwId:      gwSerial,
@@ -312,67 +334,4 @@ func InsertAemIm(gwSerial string, timeString string, value [45]float64, devId st
 		Get139:    value[40],
 	}
 	return aemData
-}
-
-func ImTest(imUrl string) {
-	//Post to IM server
-	imData := ImWrap1{}
-	cpmData := CpmForm{
-		Timestamp: "2006-01-02 15:04:06",
-		GwId:      "IIC3NTUST-0005",
-		DevID:     "33000509b53b300e",
-		Get11:     1,
-		Get12:     2,
-		Get13:     3,
-		Get14:     4,
-		Get15:     5,
-		Get16:     6,
-		Get17:     1,
-		Get18:     1,
-		Get19:     1,
-		Get110:    1,
-		Get111:    1,
-		Get112:    1,
-		Get113:    1,
-		Get114:    1,
-		Get115:    1,
-		Get116:    1,
-		Get117:    1,
-		Get118:    1,
-		Get119:    1,
-		Get120:    1,
-		Get121:    1,
-		Get122:    1,
-		Get123:    1,
-		Get124:    1,
-		Get125:    1,
-		Get126:    1,
-		Get127:    1,
-		Get128:    1,
-		Get129:    1,
-	}
-	imData.CpmRow = append(imData.CpmRow, cpmData)
-	jsonVal, err := json.Marshal(imData)
-	fmt.Println(string(jsonVal))
-	fmt.Println(imData.CpmRow)
-	if err != nil {
-
-		fmt.Println(err.Error())
-	}
-	var prettyJSON bytes.Buffer
-	err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-	if err != nil {
-
-		fmt.Println(err.Error())
-	}
-	fmt.Println("json:\n" + string(prettyJSON.Bytes()) + "\n")
-	fmt.Println(imUrl + "\n")
-	res, err := http.Post(imUrl, "application/json", bytes.NewBuffer(jsonVal))
-	if err != nil {
-
-		fmt.Println(err.Error())
-	}
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-	fmt.Println("IM Post return:\n" + string(body) + "\n" + res.Status)
 }

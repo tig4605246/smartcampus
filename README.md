@@ -29,6 +29,10 @@ env GOOS=linux GOARCH=arm go build
     Declare GW serial number (default "03")
 -help
     Show information
+-imaemurl (string)
+    post url for aem to IM
+-imcpmurl (string)
+    post url for cpm to IM
 -macfile
     Use macFile to set up mac serial numbers 
 -meter (bool)
@@ -39,6 +43,10 @@ env GOOS=linux GOARCH=arm go build
     post to airbox for testing
 -version
     Check the version
+-imaemurl
+    URL of IM's server (aem)
+-imcpmurl
+    URL of IM's server (cpm)
 ````
 
 ## Example Usage

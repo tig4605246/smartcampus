@@ -20,7 +20,7 @@ import (
 
 //Default values
 const (
-	SCVersion  = "1.6"
+	SCVersion  = "1.8"
 	CpmURL     = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
 	AemURL     = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
 	ChillerURL = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
@@ -100,8 +100,8 @@ func main() {
 		//Parse URL of cpm and aem respectively
 		for {
 			scConfig.Stats, _ = getGwStat(cpuPath, diskPath)
-			go scmeter.GetCpm70Data(scConfig)
-			go scmeter.GetAemdraData(scConfig)
+			scmeter.GetCpm70Data(scConfig)
+			scmeter.GetAemdraData(scConfig)
 			time.Sleep(30 * time.Second)
 			checkFile(scConfig.CpmLog, scConfig.AemLog)
 		}

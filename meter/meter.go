@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
+	//"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,19 +17,20 @@ import (
 //GetCpm70Data : The param im is normally related to Industrial Management. Meter function will send data to multiple servers.
 //Each server has its own list of post address, the function will post to them one by one in for loop
 func GetCpm70Data(conf FuncConf) (string, int) {
+	//cmd := exec.Command("/home/kelier-nb/Documents/cpm70-agent/cpm70-agent", "--get-dev-status")
 	cmd := exec.Command("/home/aaeon/API/cpm70-agent-tx", "--get-dev-status")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
 		return "cpm70-agent-tx Not found", -1
 	}
 	//fmt.Printf("Result:\n %s", )
 	result := strings.Split(out.String(), "\n")
 	line := 0
 	if len(result) <= 2 {
-		conf.CpmLog.WriteString("agent's return value is not valid, raw message:\n" + out.String())
+		//conf.CpmLog.WriteString("agent's return value is not valid, raw message:\n" + out.String())
 		return "not valid", 0
 	}
 	for _, m := range result {
@@ -41,7 +42,7 @@ func GetCpm70Data(conf FuncConf) (string, int) {
 			//Format MAC and GWID
 			tmpMeterSerial, err := strconv.ParseInt(subString[0][14:16], 16, 32)
 			if err != nil {
-				conf.CpmLog.WriteString("parse " + subString[0][14:16] + " to int failed\n")
+				//conf.CpmLog.WriteString("parse " + subString[0][14:16] + " to int failed\n")
 			}
 			var meterSerialString string
 			if tmpMeterSerial < 10 {
@@ -58,9 +59,9 @@ func GetCpm70Data(conf FuncConf) (string, int) {
 				meterMac := subString[0][6:14]
 				if val, ok := conf.SList[meterMac]; ok {
 					gwID = "meter_" + conf.GwSerial + "_" + val + "_" + meterSerialString
-					postMac = "aa:bb:03" + ":" + conf.GwSerial + ":" + val + ":" + meterSerialString
+					postMac = "aa:bb:02" + ":" + conf.GwSerial + ":" + val + ":" + meterSerialString
 				} else {
-					postMac = "aa:bb:03" + ":" + conf.GwSerial + ":" + "99" + ":" + meterSerialString
+					postMac = "aa:bb:02" + ":" + conf.GwSerial + ":" + "99" + ":" + meterSerialString
 					gwID = "meter_" + conf.GwSerial + "_" + "99" + "_" + meterSerialString
 				}
 			}
@@ -71,7 +72,7 @@ func GetCpm70Data(conf FuncConf) (string, int) {
 			}
 			catchTime, _ := time.Parse("2006-01-02 15:04:05", subString[1])
 			timeString := catchTime.Format("2006-01-02 15:04:05")
-			timeUnix := catchTime.Unix()
+			timeUnix := catchTime.Unix() - 28800
 			totalGen, _ := strconv.ParseFloat(subString[28], 64)
 			var value [32]float64
 			for i := 2; i < len(subString); i++ {
@@ -83,7 +84,7 @@ func GetCpm70Data(conf FuncConf) (string, int) {
 			jsonVal, err := json.Marshal(new)
 			var prettyJSON bytes.Buffer
 			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			conf.CpmLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
+			//conf.CpmLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
 			postToServer(jsonVal, conf.CpmURL, conf.CpmLog)
 
 			//Post to IM server
@@ -92,7 +93,7 @@ func GetCpm70Data(conf FuncConf) (string, int) {
 			imData.CpmRow = append(imData.CpmRow, cpmDataIm)
 			jsonVal, err = json.Marshal(imData)
 			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			conf.CpmLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
+			//conf.CpmLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
 			postToServer(jsonVal, conf.ImCpmURL, conf.CpmLog)
 
 		}
@@ -109,13 +110,13 @@ func GetAemdraData(conf FuncConf) (string, int) {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
 		return "aemdra-agent-tx Not found", -1
 	}
 	result := strings.Split(out.String(), "\n")
 	line := 0
 	if len(result) <= 2 {
-		conf.AemLog.WriteString("agent's return value is not valid, raw message:\n" + out.String())
+		//conf.AemLog.WriteString("agent's return value is not valid, raw message:\n" + out.String())
 		return "not valid", 0
 	}
 	for _, m := range result {
@@ -133,7 +134,7 @@ func GetAemdraData(conf FuncConf) (string, int) {
 			//Format MAC and GWID
 			tmpMeterSerial, err := strconv.ParseInt(subString[0][14:16], 16, 32)
 			if err != nil {
-				conf.AemLog.WriteString("parse " + subString[0][14:16] + " to int failed\n")
+				//conf.AemLog.WriteString("parse " + subString[0][14:16] + " to int failed\n")
 				continue
 			}
 			var meterSerialString string
@@ -151,9 +152,9 @@ func GetAemdraData(conf FuncConf) (string, int) {
 				meterMac := subString[0][6:14]
 				if val, ok := conf.SList[meterMac]; ok {
 					gwID = "meter_" + conf.GwSerial + "_" + val + "_" + meterSerialString
-					postMac = "aa:bb:03" + ":" + conf.GwSerial + ":" + val + ":" + meterSerialString
+					postMac = "aa:bb:02" + ":" + conf.GwSerial + ":" + val + ":" + meterSerialString
 				} else {
-					postMac = "aa:bb:03" + ":" + conf.GwSerial + ":" + "99" + ":" + meterSerialString
+					postMac = "aa:bb:02" + ":" + conf.GwSerial + ":" + "99" + ":" + meterSerialString
 					gwID = "meter_" + conf.GwSerial + "_" + "99" + "_" + meterSerialString
 				}
 			}
@@ -164,7 +165,7 @@ func GetAemdraData(conf FuncConf) (string, int) {
 			}
 			catchTime, _ := time.Parse("2006-01-02 15:04:05", subString[1])
 			timeString := catchTime.Format("2006-01-02 15:04:05")
-			timeUnix := catchTime.Unix()
+			timeUnix := catchTime.Unix() - 28800
 			totalGen, _ := strconv.ParseFloat(subString[36], 64)
 			var value [45]float64
 			for i := 2; i < len(subString); i++ {
@@ -176,7 +177,7 @@ func GetAemdraData(conf FuncConf) (string, int) {
 			jsonVal, err := json.Marshal(new)
 			var prettyJSON bytes.Buffer
 			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			conf.AemLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
+			//conf.AemLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
 			postToServer(jsonVal, conf.AemURL, conf.AemLog)
 
 			//Post to IM server
@@ -185,7 +186,7 @@ func GetAemdraData(conf FuncConf) (string, int) {
 			imData.AemRow = append(imData.AemRow, aemData)
 			jsonVal, err = json.Marshal(imData)
 			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
-			conf.AemLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
+			//conf.AemLog.WriteString("json:\n" + string(prettyJSON.Bytes()) + "\n")
 			postToServer(jsonVal, conf.ImAemURL, conf.AemLog)
 
 		}

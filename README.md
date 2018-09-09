@@ -2,6 +2,9 @@
 
 A smart campus gw daemon. This program also contains the test function for airbox.
 
+v1.8: Add return value of post to logs.
+v1.6: Remove all logs, disable threading to increase stability.
+
 ## Build Version
 
 go version go1.9.2 linux/amd64

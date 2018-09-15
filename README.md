@@ -3,6 +3,7 @@
 A smart campus gw daemon. This program also contains the test function for airbox.
 
 v1.8: Add return value of post to logs.
+
 v1.6: Remove all logs, disable threading to increase stability.
 
 ## Build Version
@@ -58,18 +59,18 @@ env GOOS=linux GOARCH=arm go build
 # Run post test
 $ ./smartcampus -airbox
 
-# Run in smart meter mode
+# Run smart-meter mode
 # Set gw serial to 05
 # Set disk file path to /dev/sda1
 $ ./smartcampus -meter -gwserial=05 -diskpath=/dev/sda1
 
-# Run in chiller mode
+# Run chiller mode
 # Set GW ID to chiller_02
 # Set post mac to aa:bb:03:01:01:02
 # Set disk file path to /dev/sda1
 $ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02
 
-# Run smart meter inside wood house (Available after 1.2)
+# Run smart-meter mode for wood house (Available after 1.2)
 $ ./smartcampus -meter -woodhouse
 ````
 

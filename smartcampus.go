@@ -1,4 +1,4 @@
-//Last edited time: 20180814
+//Last edited time: 2018/12/11
 //Author: NTUST, BMW Lab, Xu Xi Ping
 //Description: Agent for meter and chiller
 package main
@@ -20,12 +20,12 @@ import (
 
 //Default values
 const (
-	SCVersion  = "1.8"
-	CpmURL     = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
-	AemURL     = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
-	ChillerURL = "https://beta2-api.dforcepro.com/gateway/v2/rawdata"
+	SCVersion  = "1.9"
 	GWSerial   = "03"
-	MACFile    = "./macFile"
+	CpmURL     = "https://smartcampus.et.ntust.edu.tw:10002/meter/cpm"
+	AemURL     = "https://smartcampus.et.ntust.edu.tw:10002/meter/aemdra"
+	ChillerURL = "https://smartcampus.et.ntust.edu.tw:10002/chiller/rawdata"
+	MacURL     = "https://smartcampus.et.ntust.edu.tw:10002/meter/devices"
 	IMCpmURL   = "http://140.118.101.97:4000/cpm72/gw/data"
 	IMAemURL   = "http://140.118.101.97:4000/aemdra/gw/data"
 )
@@ -41,6 +41,10 @@ func main() {
 	var postMac string
 	var imAemURL string
 	var imCpmURL string
+	var macURL string
+
+	macTable := scmeter.MacList{}
+	macTable.MacDatas = make(map[string]scmeter.MacData)
 
 	flag.StringVar(&cpmURL, "cpmurl", CpmURL, "a string var")
 	flag.StringVar(&aemURL, "aemurl", AemURL, "a string var")
@@ -52,11 +56,11 @@ func main() {
 	flag.StringVar(&postMac, "postmac", "aa:bb:03:01:01:01", "a string var")
 	flag.StringVar(&imAemURL, "imaemurl", IMAemURL, "a string var")
 	flag.StringVar(&imCpmURL, "imcpmurl", IMCpmURL, "a string var")
+	flag.StringVar(&macURL, "macurl", MacURL, "a string var")
 
 	help := flag.Bool("help", false, "a bool")
 	meter := flag.Bool("meter", false, "a bool")
 	test := flag.Bool("test", false, "a bool")
-	macFile := flag.Bool("macfile", false, "a bool")
 	chiller := flag.Bool("chiller", false, "a bool")
 	versionFlag := flag.Bool("version", false, "a bool")
 	airboxTest := flag.Bool("airbox", false, "a bool")
@@ -73,23 +77,23 @@ func main() {
 		fmt.Println("smartcampus Ver.", SCVersion)
 		fmt.Println("For specifying gateway serial number, use -GWSerial")
 		fmt.Println("For specifying url, use -cpmURL, -aemUrlm, -chillerURL")
-		fmt.Println("For using mac mapping file, toggle -macfile")
+		fmt.Println("For change mac mapping url, toggle -macurl")
 		fmt.Println("For more info, please Refer to https://github.com/tig4605246/smartcampus")
-		os.Exit(0)
+		return
 	} else if *versionFlag {
 		version()
 		return
 	} else if *test {
-		sList := mapSerial(macFile)
 		stats, _ := getGwStat(cpuPath, diskPath)
-		functionTest(GWSerial, cpmURL, aemURL, chillerURL, sList, stats)
-		os.Exit(0)
+		functionTest(GWSerial, cpmURL, aemURL, chillerURL, stats)
+		return
 	} else if *airboxTest {
 		fmt.Println("Now posting Airbox fake data")
 		airbox.AirBox()
+		return
 	} else if *meter {
 		//Initialize the input struct
-		scConfig, res := initConf(GWSerial, cpmURL, aemURL, macFile, cpuPath, diskPath, woodHouse, imCpmURL, imAemURL)
+		scConfig, res := initConf(GWSerial, cpmURL, aemURL, cpuPath, diskPath, woodHouse, imCpmURL, imAemURL)
 		if res != "success" {
 			fmt.Println("Error while creating config struct: ", res)
 			os.Exit(0)
@@ -97,13 +101,23 @@ func main() {
 		checkFile(scConfig.CpmLog, scConfig.AemLog)
 		defer scConfig.CpmLog.Close()
 		defer scConfig.AemLog.Close()
+		macTable.GetRawMap(MacURL)
+		macTable.SetField()
 		//Parse URL of cpm and aem respectively
+		timeTick := 0
 		for {
 			scConfig.Stats, _ = getGwStat(cpuPath, diskPath)
-			scmeter.GetCpm70Data(scConfig)
-			scmeter.GetAemdraData(scConfig)
+			scmeter.GetCpm70Data(scConfig, macTable)
+			scmeter.GetAemdraData(scConfig, macTable)
 			time.Sleep(30 * time.Second)
-			checkFile(scConfig.CpmLog, scConfig.AemLog)
+			timeTick++
+			if timeTick > 120 {
+				checkFile(scConfig.CpmLog, scConfig.AemLog)
+				macTable.GetRawMap(MacURL)
+				macTable.SetField()
+				timeTick = 0
+			}
+
 		}
 
 	} else if *chiller {
@@ -132,65 +146,18 @@ func main() {
 	return
 }
 
-func functionTest(GWSerial string, cpmURL string, aemURL string, chillerURL string, sList map[string]string, stats []float64) {
+func functionTest(GWSerial string, cpmURL string, aemURL string, chillerURL string, stats []float64) {
 	fmt.Println("Gateway Serial:", GWSerial)
 	fmt.Println("Cpu:", stats[0], " Disk:", stats[1])
 	fmt.Println("url config:")
 	fmt.Println("cpm url :\n", cpmURL)
 	fmt.Println("aem url :\n", aemURL)
 	fmt.Println("chiller url is:\n", chillerURL)
-	fmt.Println("List meter's matching table")
-	for name, val := range sList {
-		fmt.Println(name, " ", val)
-	}
 	return
 }
 
 func version() {
 	fmt.Println("SmartCampus Agent Version: ", SCVersion)
-}
-
-func mapSerial(macFile *bool) map[string]string {
-	sList := make(map[string]string)
-	if !*macFile {
-		sList["09b52f35"] = "01"
-		sList["09b52f13"] = "01"
-		sList["09b52f21"] = "02"
-		sList["09b53b05"] = "03"
-		sList["09b53b79"] = "04"
-		sList["09b53b49"] = "01" //AD
-		sList["09b52f1e"] = "01"
-		sList["09b53b18"] = "01"
-		sList["09b53b1c"] = "01"
-		sList["09b53b1c"] = "01"
-		sList["09b53b21"] = "01"
-		sList["09b52f5a"] = "01"
-		sList["09b52f02"] = "01"
-		sList["09b52f47"] = "01"
-		sList["09b52f48"] = "01"
-		sList["09b52f10"] = "01"
-		sList["09b53b30"] = "01"
-		sList["09b4decb"] = "01"
-		sList["09b53b30"] = "98" //test
-		//99 for unknown
-	} else {
-		file, err := ioutil.ReadFile(MACFile)
-		if err != nil {
-			log.Fatal("Can't Open macFile")
-		}
-		subString := strings.Split(string(file), "\n")
-		for i := 0; i < len(subString); i++ {
-			if len(subString[i]) > 0 {
-				macMap := strings.Split(subString[i], ":")
-				if len(macMap) > 1 {
-					sList[macMap[0]] = macMap[1]
-				}
-
-			}
-		}
-	}
-
-	return sList
 }
 
 func getGwStat(cpuPath string, diskPath string) ([]float64, int) {
@@ -226,13 +193,12 @@ func checkFile(cpmLog *os.File, aemLog *os.File) {
 	return
 }
 
-func initConf(GWSerial string, cpmURL string, aemURL string, macFile *bool, cpuPath string, diskPath string, woodHouse *bool, imCpmURL string, imAemURL string) (scmeter.FuncConf, string) {
+func initConf(GWSerial string, cpmURL string, aemURL string, cpuPath string, diskPath string, woodHouse *bool, imCpmURL string, imAemURL string) (scmeter.FuncConf, string) {
 	var err error
 	scConfig := scmeter.FuncConf{}
 	scConfig.CpmURL = strings.Split(cpmURL, "^")
 	scConfig.AemURL = strings.Split(aemURL, "^")
 	scConfig.GwSerial = GWSerial
-	scConfig.SList = mapSerial(macFile)
 	scConfig.Stats, _ = getGwStat(cpuPath, diskPath)
 	scConfig.WoodHouse = woodHouse
 	scConfig.ImCpmURL = strings.Split(imCpmURL, "^")

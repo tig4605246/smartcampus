@@ -2,10 +2,6 @@
 
 A smart campus gw daemon. This program also contains the test function for airbox.
 
-v1.8: Add return value of post to logs.
-
-v1.6: Remove all logs, disable threading to increase stability.
-
 ## Build Version
 
 go version go1.9.2 linux/amd64
@@ -37,7 +33,7 @@ env GOOS=linux GOARCH=arm go build
     post url for aem to IM
 -imcpmurl (string)
     post url for cpm to IM
--macfile
+-macfile #Deprecated
     Use macFile to set up mac serial numbers 
 -meter (bool)
     run in smart meter mode
@@ -68,7 +64,7 @@ $ ./smartcampus -meter -gwserial=05 -diskpath=/dev/sda1
 # Set GW ID to chiller_02
 # Set post mac to aa:bb:03:01:01:02
 # Set disk file path to /dev/sda1
-$ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 gwid=chiller_02
+$ ./smartcampus -chiller -diskpath=/dev/sda1 -postmac=aa:bb:03:01:01:02 -gwid=chiller_02
 
 # Run smart-meter mode for wood house (Available after 1.2)
 $ ./smartcampus -meter -woodhouse
@@ -78,3 +74,13 @@ $ ./smartcampus -meter -woodhouse
 
 *  CPU check only process the first core
 *  Disk check always return 0
+
+## Change Logs
+
+v1.9: Change post address, remove dfrocepro, unify the post data format, add alert mail function
+
+v1.8: Add return value of post to logs.
+
+v1.6: Remove all logs, disable threading to increase stability.
+
+v1.2: This version includes threading and logs, not so stable.

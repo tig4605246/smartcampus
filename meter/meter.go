@@ -79,7 +79,7 @@ func GetCpm70Data(conf FuncConf, macTable MacList) (string, int) {
 			new := insertCpm(gwID, conf.Stats, timeUnix, postMac, timeString, value, totalGen)
 			jsonVal, err := json.Marshal(new)
 			var prettyJSON bytes.Buffer
-			err = json.Indent(&prettyJSON, jsonVal, "", "\t")
+			err = json.Indent(&prettyJSON, jsonVal, "", "\t") // For debug print
 			postToServer(jsonVal, conf.CpmURL, conf.CpmLog)
 			//fmt.Println(prettyJSON.String())
 			//Post to IM server

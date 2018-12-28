@@ -9,6 +9,7 @@ go version go1.9.2 linux/amd64
 ## Build for Beaglebone
 
 ````
+cd cmd/smartcampus
 env GOOS=linux GOARCH=arm go build
 ````
 

@@ -1,5 +1,6 @@
 # Gateway Daemon for Aemdra and CPM70 Meters (DAM)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tig4605246/smartcampus)](https://goreportcard.com/report/github.com/tig4605246/smartcampus)
+
 A smart campus gw daemon. This program also contains the test function for airbox.
 
 ## Build Version
